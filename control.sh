@@ -17,7 +17,6 @@ java=openjdk
 # if no parameters this is the default entry point.  The dist command (see below)
 # put the name of the play executable into playexe
 if [[ $# == 0 ]]; then
-    # export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     x=$( cat playexe )
     exec ./$x
 fi
@@ -37,9 +36,8 @@ if [ "$1" == "dist" ]; then
     cleanup="true"
 fi
 
-apt-get update
-#apt-get install -y git build-essential wget zip unzip software-properties-common
-apt-get install -y git wget unzip
+apt-get update -qq
+apt-get --no-install-recommends install -qq git wget unzip > /dev/null
 
 # set up the temp dir to be deleted during clean up
 tmpDir=/tmp/tmp
@@ -47,7 +45,7 @@ mkdir $tmpDir
 pushd $tmpDir
 
 # Install play
-wget http://downloads.typesafe.com/typesafe-activator/$ACTIVATOR_VERSION/typesafe-activator-$ACTIVATOR_VERSION.zip
+wget -nv http://downloads.typesafe.com/typesafe-activator/$ACTIVATOR_VERSION/typesafe-activator-$ACTIVATOR_VERSION.zip
 unzip typesafe-activator-$ACTIVATOR_VERSION.zip
 activatorBin=$tmpDir/activator-$ACTIVATOR_VERSION/activator
 
@@ -56,10 +54,10 @@ oracle)
     # Install Java and dependencies
     echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
     add-apt-repository -y ppa:webupd8team/java
-    apt-get install -y oracle-java8-installer
+    apt-get --no-install-recommends install -qq oracle-java8-installer > /dev/null
     ;;
 openjdk)
-    apt-get install -y openjdk-7-jdk
+    apt-get --no-install-recommends install -qq openjdk-7-jdk > /dev/null
     ;;
 esac
 
@@ -75,7 +73,7 @@ export _JAVA_OPTIONS=-Duser.home=$tmpDir
 # build the tar ball
 $activatorBin universal:packageZipTarball
 
-# the distribution was all done in tmp/tmp so come home and finish up
+# the distribution was all done in tmp/tmp get the names, come home, and finish up...
 # The output of activator are some funny escaped character sequences so after getting to the last word
 # strip off the first and last 4 characters
 x=$( $activatorBin universal:normalizedName )
@@ -92,11 +90,11 @@ echo $name/bin/$normalizedName > playexe
 
 
 if [ $cleanup == "true" ]; then
-    apt-get remove --purge --auto-remove -y git wget unzip
+    apt-get remove --purge --auto-remove -qq git wget unzip
     case $java in
     openjdk)
-        apt-get remove --purge --auto-remove -y openjdk-7-jdk
-        apt-get install -y openjdk-7-jre-headless
+        apt-get remove --purge --auto-remove -qq openjdk-7-jdk
+        apt-get install -qq openjdk-7-jre-headless > /dev/null
         ;;
     oracle)
         rm -rf /var/cache/oracle-jdk8-installer

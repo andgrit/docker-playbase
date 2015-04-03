@@ -1,3 +1,3 @@
 #!/bin/bash
 set -x
-docker build -t powellquiring/playbase .
+docker build -t andgrit/playbase .
